@@ -1,0 +1,71 @@
+version: '3'
+services:
+  redis-master:
+    image: redis
+    command: redis-server --port 6379 --replica-announce-ip redis-master --slave-announce-ip redis-master --protected-mode no
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis-master:/data
+    networks:
+      - redis-net
+  redis-slave1:
+    image: redis
+    command: redis-server --port 6380 --slaveof redis-master 6379 --replica-announce-ip redis-slave1 --slave-announce-ip redis-slave1 --protected-mode no
+    ports:
+      - "6380:6379"
+    volumes:
+      - ./redis-slave1:/data
+    networks:
+      - redis-net
+  redis-slave2:
+    image: redis
+    command: redis-server --port 6381 --slaveof redis-master 6379 --replica-announce-ip redis-slave2 --slave-announce-ip redis-slave2 --protected-mode no
+    ports:
+      - "6381:6379"
+    volumes:
+      - ./redis-slave2:/data
+    networks:
+      - redis-net
+  sentinel1:
+    image: redis
+    command: redis-sentinel /sentinel.conf
+    ports:
+      - "26379:26379"
+    volumes:
+      - ./sentinel1.conf:/sentinel.conf
+    networks:
+      - redis-net
+    depends_on:
+      - redis-master
+      - redis-slave1
+      - redis-slave2
+  sentinel2:
+    image: redis
+    command: redis-sentinel /sentinel.conf
+    ports:
+      - "26380:26379"
+    volumes:
+      - ./sentinel2.conf:/sentinel.conf
+    networks:
+      - redis-net
+    depends_on:
+      - redis-master
+      - redis-slave1
+      - redis-slave2
+  sentinel3:
+    image: redis
+    command: redis-sentinel /sentinel.conf
+    ports:
+      - "26381:26379"
+    volumes:
+      - ./sentinel3.conf:/sentinel.conf
+    networks:
+      - redis-net
+    depends_on:
+      - redis-master
+      - redis-slave1
+      - redis-slave2
+networks:
+  redis-net:
+    driver: bridge
